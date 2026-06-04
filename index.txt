@@ -1,0 +1,144 @@
+
+// Get all the processes running using
+// !ps -ef
+
+// Get detail about perticular process using
+// !ps v 44587
+
+// anuragkaushik@Anurags-MacBook-Pro ~ %
+// !ps v ps v 44587
+// PID STAT      TIME  SL  RE PAGEIN      VSZ    RSS   LIM     TSIZ  %CPU %MEM COMMAND
+// 414 Ss     8:40.82   0   0      0 435469728  39248     -        0   0.4  0.2 /usr/libexec/logd
+
+//! ps -T -p 414
+
+//   anuragkaushik@Anurags-MacBook-Pro ~ %   ps -T -p 414
+//   PID TTY           TIME CMD
+//   414 ??         8:41.96 /usr/libexec/logd
+// 52569 ttys004    0:00.01 login -pf anuragkaushik
+// 52570 ttys004    0:00.08 -zsh
+// 54518 ttys004    0:00.01 ps -T -p 414
+
+// ps -mo pid,tid,%cpu,psr -p 44587
+
+// ps -p 44587 -o pid,psr,comm
+
+// Allocating process module
+// const process = require("process");
+
+// Calling process.cpuUsage() method
+// const usage = process.cpuUsage();
+
+// console.log(process.memoryUsage());
+
+// Printing returned value
+// console.log(usage);
+
+const os = require("os");
+// console.log("Total cores:", os.cpus().length);
+// console.log("CPU model:", os.cpus()[0].model);
+
+// console.log(os.cpus());
+
+// var os = require("os");
+
+//Create function to get CPU information
+function cpuAverage() {
+  //Initialise sum of idle and time of cores and fetch CPU info
+  var totalIdle = 0,
+    totalTick = 0;
+  var cpus = os.cpus();
+
+  //Loop through CPU cores
+  for (var i = 0, len = cpus.length; i < len; i++) {
+    //Select CPU core
+    var cpu = cpus[i];
+
+    //Total up the time in the cores tick
+    for (type in cpu.times) {
+      totalTick += cpu.times[type];
+    }
+
+    //Total up the idle time of the core
+    totalIdle += cpu.times.idle;
+  }
+
+  //Return the average Idle and Tick times
+  return { idle: totalIdle / cpus.length, total: totalTick / cpus.length };
+}
+
+//Grab first CPU Measure
+var startMeasure = cpuAverage();
+
+//Set delay for second Measure
+setTimeout(function () {
+  //Grab second Measure
+  var endMeasure = cpuAverage();
+
+  //Calculate the difference in idle and total time between the measures
+  var idleDifference = endMeasure.idle - startMeasure.idle;
+  var totalDifference = endMeasure.total - startMeasure.total;
+
+  //Calculate the average percentage CPU usage
+  var percentageCPU = 100 - ~~((100 * idleDifference) / totalDifference);
+
+  //Output result to console
+  console.log(percentageCPU + "% CPU Usage.");
+}, 100);
+
+// Here is a way that console every single cpu average load:
+
+// const os = require('os')
+
+function delta() {
+  const cpus = os.cpus();
+
+  return cpus.map((cpu) => {
+    const times = cpu.times;
+    return {
+      tick: Object.keys(times)
+        .filter((time) => time !== "idle")
+        .reduce((tick, time) => {
+          tick += times[time];
+          return tick;
+        }, 0),
+      idle: times.idle,
+    };
+  });
+}
+
+let startMeasures = delta();
+setInterval(() => {
+  const endMeasures = delta();
+  const percentageCPU = endMeasures.map((end, i) => {
+    return (
+      (
+        ((end.tick - startMeasures[i].tick) /
+          (end.idle - startMeasures[i].idle)) *
+        100
+      ).toFixed(3) + "%"
+    );
+  });
+
+  console.log(percentageCPU.join(" "), "\n");
+
+  // reset
+  startMeasures = delta();
+}, 2000);
+
+
+Here is a way that console every single cpu average load:
+
+const os = require('os')
+
+function delta() {
+  const cpus = os.cpus()
+
+  return cpus.map(cpu => {
+    const times = cpu.times
+    return {
+      tick: Object.keys(times).filter(time => time !== 'idle').reduce((tick, time) => { tick+=times[time]; return tick }, 0),
+      idle: times.idle,
+    }
+  })
+}
